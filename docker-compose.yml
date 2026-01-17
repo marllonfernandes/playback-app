@@ -1,0 +1,35 @@
+services:
+  app:
+    build: .
+    container_name: playback-app-combined
+    ports:
+      - "3000:3000"
+    volumes:
+      # - ./backend:/app/backend # Disabled to allow using built frontend in image
+      # We mount downloads to persist
+      - ./downloads:/app/downloads
+      # WARNING: If we mount ./backend, we might mask the 'public' folder we created at build time
+      # if it doesn't exist on host!
+      # To solve this:
+      # 1. We should NOT mount /app/backend fully if we rely on build artifacts inside it.
+      # OR
+      # 2. We should treat 'public' as a volume or ensure it exists on host.
+      # Best practice for "build frontend and put in backend":
+      # The 'public' folder will be inside the container image at /app/backend/public.
+      # If we bind mount ./backend from host to /app/backend, the host's directory (which likely lacks 'public/dist')
+      # will OVERRIDE the container's directory, effectively deleting the built assets.
+
+      # SOLUTION: Use an anonymous volume for /app/backend/public to preserve container content?
+      # OR: Do not mount the whole backend code in production mode.
+
+      # For this "dev-ish" setup where user wants to build frontend:
+      # Let's assume we want to run what we built.
+
+      # If the user wants to develop backend while serving built frontend, this is tricky with bind mounts.
+      # I will remove the bind mount for backend code for this "production build" request
+      # OR I will simply accept that this is a "Production Run" compose file.
+    working_dir: /app/backend
+    environment:
+      - PORT=3000
+    command: npm start
+    restart: always
